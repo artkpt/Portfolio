@@ -1,2 +1,0 @@
-2025-01-07 22:13:12,589 - INFO - เริ่มต้น pipeline
-2025-01-07 22:13:12,737 - ERROR - error: 2017 (HY000): Can't open named pipe to host: .  pipe: MySQL (2)
