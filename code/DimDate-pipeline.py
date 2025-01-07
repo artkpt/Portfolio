@@ -28,14 +28,14 @@ logging.basicConfig(
 )
 
 def _drop_table(cur):
-        logging.info("กำลังลบตาราง staging_dim_date ถ้ามีอยู่แล้ว")
+        logging.info("กำลังลบตาราง staging_dim_date")
         drop_table = "DROP TABLE IF EXISTS staging_dim_date"
         cur.execute(drop_table)
 
 def _create_dim_date(cur):
         logging.info("กำลังสร้างตาราง staging_dim_date")
         create_table_query = ["""
-        CREATE TABLE staging_dim_date (
+        CREATE TABLE IF NOT EXISTS staging_dim_date (
             date_id DATE,
             date_year INT,
             date_month INT,
@@ -45,7 +45,7 @@ def _create_dim_date(cur):
         )
         """,
         """
-        CREATE TABLE dim_date (
+        CREATE TABLE IF NOT EXISTS dim_date (
             date_id DATE,
             date_year INT,
             date_month INT,
@@ -63,10 +63,10 @@ def _create_dim_date(cur):
 def _process(cur):
         logging.info("เริ่มการสร้างข้อมูล dim_date")
         current_year = datetime.now().year
-        past_year = current_year - 1
+        next_year = current_year + 1
 
-        start_date = f"{past_year}-01-01"
-        end_date = f"{current_year}-12-31"
+        start_date = f"{current_year}-01-01"
+        end_date = f"{next_year}-12-31"
 
         date_range = pd.date_range(start=start_date, end=end_date)
         dim_date = pd.DataFrame({
@@ -135,6 +135,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
