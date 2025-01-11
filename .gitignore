@@ -1,0 +1,7 @@
+#Environments
+.ENV
+.env
+.venv
+
+
+pipeline.log

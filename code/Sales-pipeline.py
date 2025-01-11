@@ -24,12 +24,12 @@ database= os.getenv("DATABASE")
 
 def _staging(cur):
         logging.info("Dropping staging")
-        drop_table = "drop table if exists staging"
+        drop_table = "DROP TABLE IF EXISTS staging"
         cur.execute(drop_table)
 
         logging.info("Creating staging")
         create_table_query = """
-            create table if not exists staging(
+            CREATE TABLE IF NOT EXISTS staging(
                 order_id varchar(20),
                 customer_id varchar(255),
                 order_date date,
@@ -48,11 +48,11 @@ def _staging(cur):
         transaction = pd.read_excel('C:\\Users\\art\\Desktop\\ZTEC\\data\\ztec.xlsx',sheet_name="transaction")
         for index, row in transaction.iterrows() :
             insert_statement = f"""
-                insert into staging(
+                INSERT INTO staging(
                     order_id, customer_id, order_date, sku_id, sales, quantity, return_q, net_sales,
                     shipping_fee, total           
                 )
-                values(
+                VALUES(
                     '{row["order_id"]}','{row["customer"]}','{row["order_date"]}','{row["sku_id"]}',
                     {row["sales"]},{row["จำนวน"]},{row["Returned quantity"]},
                     {row["ต้นทุนขายหักคูปองและcoin"]},{row["ค่าจัดส่งที่ชำระโดยผู้ซื้อ"]},{row["total"]}
@@ -62,12 +62,12 @@ def _staging(cur):
 
 def _table_for_join(cur):
     logging.info("Dropping temp")
-    drop = "drop table if exists temp"
+    drop = "DROP TABLE IF EXISTS temp"
     cur.execute(drop)
 
     logging.info("Creating temp")
     create = """
-        create table if not exists temp(
+        CREATE TABLE IF NOT EXISTS temp(
             order_id varchar(20),
             customer_id varchar(255),
             order_date date,
@@ -78,22 +78,22 @@ def _table_for_join(cur):
 
     logging.info("Inserting temp")
     insert = """
-        insert into temp(order_id, customer_id, order_date, promotion)
-        select order_id,customer_id,order_date, sum(sales)+avg(shipping_fee)-avg(total)
-        from staging
-        group by 1,2,3
+        INSERT INTO temp(order_id, customer_id, order_date, promotion)
+        SELECT order_id,customer_id,order_date, sum(sales)+avg(shipping_fee)-avg(total)
+        FROM staging
+        GROUP BY 1,2,3
     """
     cur.execute(insert)
 
 
 def _staging_sales(cur):
     logging.info("Dropping staging_sales")
-    drop = "drop table if exists staging_sales"
+    drop = "DROP TABLE IF EXISTS staging_sales"
     cur.execute(drop)
 
     logging.info("Creating staging_sales")
     create = """
-        create table if not exists staging_sales(
+        CREATE TABLE IF NOT EXISTS staging_sales(
             order_id varchar(20),
             customer_id varchar(255),
             order_date date,
@@ -111,27 +111,29 @@ def _staging_sales(cur):
 
     logging.info("Inserting staging_sales")
     insert = """
-        insert into staging_sales(order_id ,customer_id ,order_date ,
+        INSERT INTO staging_sales(order_id ,customer_id ,order_date ,
         sku_id ,sales ,quantity ,return_q ,net_sales ,shipping_fee ,
         total, promotion)
-        select s.order_id, s.customer_id, s.order_date, s.sku_id, s.sales, s.quantity, s.return_q, 
-        s.net_sales, s.shipping_fee, s.total , t.promotion
-        from staging s left join temp t
-        on (s.order_id = t.order_id 
-        and s.customer_id = t.customer_id
-        and s.order_date = s.order_date)
+        SELECT 
+            s.order_id, s.customer_id, s.order_date, s.sku_id, s.sales, s.quantity, s.return_q, 
+            s.net_sales, s.shipping_fee, s.total , t.promotion
+        FROM
+            staging s left join temp t
+            on (s.order_id = t.order_id 
+            and s.customer_id = t.customer_id
+            and s.order_date = s.order_date)
     """
     cur.execute(insert)
 
 
 def _staging_sales2(cur):
     logging.info("Dropping staging_sales2")
-    drop = "drop table if exists staging_sales2"
+    drop = "DROP TABLE IF EXISTS staging_sales2"
     cur.execute(drop)
 
     logging.info("Creating staging_sales2")
     create = """
-        create table if not exists staging_sales2(
+        CREATE TABLE IF NOT EXISTS staging_sales2(
             order_id varchar(20),
             customer_id varchar(255),
             order_date date,
@@ -146,24 +148,27 @@ def _staging_sales2(cur):
 
     logging.info("Inserting staging_sales2")
     insert = """
-        insert into staging_sales2(order_id ,customer_id ,order_date ,
+        INSERT INTO staging_sales2(order_id ,customer_id ,order_date ,
         sku_id ,sales ,quantity ,return_q ,promotion)
-        select order_id ,customer_id ,order_date ,
-        sku_id ,sales-promotion as sales ,quantity ,return_q , 
-        promotion / COUNT(*) OVER (PARTITION BY order_id) AS promotion
-        from staging_sales
-        where total > 0
+        SELECT 
+            order_id ,customer_id ,order_date ,
+            sku_id ,sales-promotion as sales ,quantity ,return_q , 
+            promotion / COUNT(*) OVER (PARTITION BY order_id) AS promotion
+        FROM 
+            staging_sales
+        WHERE 
+            total > 0
     """
     cur.execute(insert)
 
 def _sales_by_sku(cur):
     logging.info("Dropping sales_by_sku")
-    drop = "drop table if exists sales_by_sku"
+    drop = "DROP TABLE IF EXISTS sales_by_sku"
     cur.execute(drop)
 
     logging.info("Creating sales_by_sku")
     create = """
-        create table if not exists sales_by_sku(
+        CREATE TABLE IF NOT EXISTS sales_by_sku(
             order_id varchar(20),
             customer_id varchar(255),
             order_date date,
@@ -181,7 +186,7 @@ def _sales_by_sku(cur):
 
     logging.info("Inserting sales_by_sku")
     insert = """
-        insert into sales_by_sku(order_id ,customer_id ,order_date ,
+        INSERT INTO sales_by_sku(order_id ,customer_id ,order_date ,
         sku_id ,sales ,quantity ,return_q ,promotion
         )
         SELECT 
@@ -199,12 +204,12 @@ def _sales_by_sku(cur):
 
 def _total_by_order(cur):
     logging.info("Dropping total_by_order")
-    drop = "drop table if exists total_by_order"
+    drop = "DROP TABLE IF EXISTS total_by_order"
     cur.execute(drop)
 
     logging.info("Creating total_by_order")
     create = """
-        create table if not exists total_by_order(
+        CREATE TABLE IF NOT EXISTS total_by_order(
             order_id varchar(20),
             customer_id varchar(255),
             order_date date,
@@ -223,7 +228,7 @@ def _total_by_order(cur):
 
     logging.info("Inserting total_by_order")
     insert = """
-        insert into total_by_order(order_id ,customer_id ,order_date ,
+        INSERT INTO total_by_order(order_id ,customer_id ,order_date ,
         sales ,quantity ,return_q , net_sales, shipping_fee, total, promotion
         )
         SELECT 
@@ -244,10 +249,10 @@ def _total_by_order(cur):
 def _drop_all_staging(cur):
     logging.info("Dropping ALL Staging")
     drop = [
-        "drop table if exists temp",
-        "drop table if exists staging",
-        "drop table if exists staging_sales",
-        "drop table if exists staging_sales2"
+        "DROP TABLE IF EXISTS temp",
+        "DROP TABLE IF EXISTS staging",
+        "DROP TABLE IF EXISTS staging_sales",
+        "DROP TABLE IF EXISTS staging_sales2"
     ]
     for query in drop:
         cur.execute(query)

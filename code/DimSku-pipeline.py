@@ -25,13 +25,13 @@ logging.basicConfig(
 
 def _drop_table_query(cur):
     logging.info("Dropping staging table")
-    statement = "drop table if exists staging_dim_sku"
+    statement = "DROP TABLE IF EXISTS staging_dim_sku"
     cur.execute(statement)
 
 def _create_table_queries(cur):
     logging.info("creating table sku")
     create_table_queries = ["""
-        create table if not exists staging_dim_sku(
+        CREATE TABLE IF NOT EXISTS staging_dim_sku(
             sku_id varchar(20),
             sku_name varchar(255),
             sku_brand varchar(10),
@@ -39,7 +39,7 @@ def _create_table_queries(cur):
         )   
     """,
     """
-        create table if not exists dim_sku(
+        CREATE TABLE IF NOT EXISTS dim_sku(
             sku_id varchar(20),
             sku_name varchar(255),
             sku_brand varchar(10),
@@ -58,13 +58,13 @@ def _insert_data_query(cur):
 
     for index, row in data.iterrows():
         insert_statement = f"""
-            insert into staging_dim_sku(
+            INSERT INTO staging_dim_sku(
                 sku_id,
                 sku_name,
                 sku_brand,
                 item_id 
             )
-            values(
+            VALUES(
                 '{row["sku_id"]}',
                 '{row["sku_name"]}',
                 '{row["brand"]}',
@@ -75,15 +75,15 @@ def _insert_data_query(cur):
     
     logging.info("Inserting data to table dim_sku")
     insert_statement = f"""
-            insert into dim_sku(
+            INSERT INTO dim_sku(
                 sku_id,
                 sku_name,
                 sku_brand,
                 item_id 
             )
-            select sku_id, sku_name, sku_brand, item_id 
-            from staging_dim_sku
-            where sku_id not in (select sku_id from dim_sku)
+            SELECT sku_id, sku_name, sku_brand, item_id 
+            FROM staging_dim_sku
+            WHERE sku_id not in ( SELECT sku_id FROM dim_sku)
          """      
     cur.execute(insert_statement)
 
