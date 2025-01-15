@@ -1,5 +1,6 @@
 # Portfolio
-Work Samples - ETL pipeline using Python and Created Power BI dashboard
+Work Samples - ETL pipeline using MySQL as staging area then load transformed data into BigQuery 
+and Created Power BI dashboard
 
 ## Data modeling on this project
 ![data-modeling](./image/data-modeling.png)
